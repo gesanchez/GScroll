@@ -3,7 +3,7 @@
     var pluginName = "GScroll",
         defaults = {
             width: "300px",
-            height: "100"
+            height: "300px"
         };
 
     function Plugin( element, options ) {
@@ -37,32 +37,96 @@
         */
         adjust: function() {
             var self = this;
+            
             self.conHeight = self.container.height();
-            self.scrollHeight = self.scrollable.height();
-            self.barHeight = self.conHeight - Math.abs(self.conHeight - self.scrollHeight);
+            self.scrollHeight = 0;
+            if (self.node.is(':not(:visible)')){
+                var clone = self.node.clone();
+                clone.css({
+                    width: self.options.width,
+                    'visibility' : 'hidden'
+                }).removeAttr('id').show();
+                $('body').append(clone);
+                self.scrollHeight = clone.outerHeight();
+                clone.remove();
+            }else{
+                self.scrollHeight = self.scrollable.height();
+            }
+            self.barHeight = Math.max(10,(self.conHeight - Math.abs(self.conHeight - self.scrollHeight)));
             
             self.bar.css('height',self.barHeight + 'px');
         },
         
         events: function(){
             var self = this;
-            /* Adding wheel event to container */
-            self.container.on('DOMMouseScroll mousewheel',function(e){
-                var o = e.originalEvent,
-                    delta = (o.detail < 0 || o.wheelDelta > 0) ? 1 : -1;
+            self.dragActive = false;
+            self.y = 0;
+            /**
+            * Added event to container
+            */
+            self.container.on({
+                'DOMMouseScroll mousewheel' : function(e){
+                    var o = e.originalEvent,
+                        delta = (o.detail < 0 || o.wheelDelta > 0) ? 1 : -1;
                 
-                self.wheel.call(self, delta);
+                    self.wheel.call(self, delta);
+                },
+                'mouseenter' : function(){
+                    self.bar.stop(true,true).fadeIn();
+                },
+                'mouseleave' : function(){
+                    self.bar.stop(true,true).fadeOut();
+                    self.dragActive = false;
+                }
+            });
+            
+            /**
+            * Added event for scroll bar
+            */
+            self.bar.on({
+                'mousedown' : function(e){
+                    e.preventDefault();
+                    self.dragActive = true;
+                    self.y = e.pageY;
+                },
+                'mouseup' : function(e){
+                    e.preventDefault();
+                    self.dragActive = false;
+                },
+                'mousemove' : function(e){
+                    e.preventDefault();
+                    self.drag.call(self, e);
+                }
+            });
+            
+            /**
+            * Added event to element
+            */
+            self.node.on('resize.' + pluginName, function(){
+                self.adjust.call(self);    
+                
+            }).on('destroy.' + pluginName, function(){
+                self.node.unwrap().next().remove().end().unwrap();
+                $.removeData(self.element);
+                self.node.off(pluginName);
+            });
+            
+            
+            $(window).on('resize.' + pluginName, function(){
+                self.adjust.call(self);  
             });
         },
+        /* Method for move bar and scrollable on mousewheel event */
         wheel: function(delta){
             var self = this,
                 maxTop = self.conHeight - self.barHeight,
-                maxBottom = -maxTop;
+                maxScrollBottom = self.conHeight - self.scrollHeight,
+                top = maxTop / (Math.abs(maxScrollBottom)) * 10;
             
             if (delta > 0){
                 
                 self.bar.stop(true,true).animate({
-                    'top' : Math.max(0, parseFloat(self.bar.position().top) - 10)
+                    'top' : Math.max(0, parseFloat(self.bar.position().top) - top)
                 },100);
                 
                 self.scrollable.stop(true,true).animate({
@@ -72,12 +136,37 @@
             }else if (delta < 0){
 
                 self.bar.stop(true,true).animate({
-                    'top' : Math.min(maxTop, parseFloat(self.bar.position().top) + 10)
+                    'top' : Math.min(maxTop, parseFloat(self.bar.position().top) + top)
                 },100);
                 
                 self.scrollable.stop(true,true).animate({
-                    'top' : Math.max(maxBottom, parseFloat(self.scrollable.position().top) - 10)
+                    'top' : Math.max(maxScrollBottom, parseFloat(self.scrollable.position().top) - 10)
                 },100);
+            }
+        },
+        /**
+        * Method for move bar and scrollable when bar is dragged
+        */
+        drag : function(e){
+            var self = this,
+                maxTop = self.conHeight - self.barHeight,
+                maxScrollBottom = self.conHeight - self.scrollHeight,
+                stop = maxTop / (Math.abs(maxScrollBottom)) * 10;
+
+            if (self.dragActive === true){
+                var top = parseFloat(self.bar.position().top) + e.pageY - self.y;
+                top = Math.min(top, maxTop); 
+                
+                self.bar.css({
+                    top: Math.max(0 ,top) + 'px'            
+                });
+                
+                console.log( -top * stop );
+                self.scrollable.css({
+                    'top' : Math.max(maxScrollBottom, Math.ceil(-top * stop))
+                });
+                
+                self.y = e.pageY;
             }
         }
     };
