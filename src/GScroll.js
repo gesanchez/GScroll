@@ -3,7 +3,7 @@
     var pluginName = "GScroll",
         defaults = {
             width: "300px",
-            height: "300px"
+            height: "50px"
         };
 
     function Plugin( element, options ) {
@@ -77,6 +77,10 @@
                 'mouseleave' : function(){
                     self.bar.stop(true,true).fadeOut();
                     self.dragActive = false;
+                },
+                'mousemove' : function(e){
+                    e.preventDefault();
+                    self.drag.call(self, e);
                 }
             });
             
@@ -90,8 +94,8 @@
                     self.y = e.pageY;
                 },
                 'mouseup' : function(e){
-                    e.preventDefault();
                     self.dragActive = false;
+                    console.log('asd');
                 },
                 'mousemove' : function(e){
                     e.preventDefault();
@@ -150,10 +154,10 @@
         drag : function(e){
             var self = this,
                 maxTop = self.conHeight - self.barHeight,
-                maxScrollBottom = self.conHeight - self.scrollHeight,
-                stop = maxTop / (Math.abs(maxScrollBottom)) * 10;
-
+                maxScrollBottom = self.conHeight - self.scrollHeight;
+            
             if (self.dragActive === true){
+                
                 var top = parseFloat(self.bar.position().top) + e.pageY - self.y;
                 top = Math.min(top, maxTop); 
                 
@@ -161,9 +165,8 @@
                     top: Math.max(0 ,top) + 'px'            
                 });
                 
-                console.log( -top * stop );
                 self.scrollable.css({
-                    'top' : Math.max(maxScrollBottom, Math.ceil(-top * stop))
+                    'top' : Math.min(0 ,Math.max(maxScrollBottom, (maxScrollBottom / maxTop) * top))
                 });
                 
                 self.y = e.pageY;
