@@ -3,7 +3,7 @@
     var pluginName = "GScroll",
         defaults = {
             width: "300px",
-            height: "50px"
+            height: "100px"
         };
 
     function Plugin( element, options ) {
@@ -109,6 +109,8 @@
             self.node.on('resize.' + pluginName, function(){
                 self.adjust.call(self);    
                 
+                self.onResize.call(self);
+                
             }).on('destroy.' + pluginName, function(){
                 self.node.unwrap().next().remove().end().unwrap();
                 $.removeData(self.element);
@@ -118,6 +120,7 @@
             
             $(window).on('resize.' + pluginName, function(){
                 self.adjust.call(self);  
+                
             });
         },
         /* Method for move bar and scrollable on mousewheel event */
@@ -171,6 +174,18 @@
                 
                 self.y = e.pageY;
             }
+        },
+        onResize : function(){
+            var self = this,
+                scrollable_top = Math.abs(parseFloat(self.scrollable.css('top'))),
+                bar_top = parseFloat(self.bar.css('top')),
+                maxScrollBottom = Math.abs(self.conHeight - self.scrollHeight),
+                maxTop = self.conHeight - self.barHeight,
+                top = ((scrollable_top * bar_top) / maxScrollBottom) - maxTop;
+            
+            self.bar.css({
+                'top': Math.min(maxScrollBottom, Math.max(0, bar_top + top))
+            });
         }
     };
 
