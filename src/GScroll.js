@@ -33,7 +33,7 @@
         *
         * Method for adjust bar height
         */
-        adjust: function() {
+        adjust: function(callback) {
             var self = this;
             
             self.conHeight = self.container.height();
@@ -56,6 +56,10 @@
             self.barHeight = Math.max(20,(self.conHeight - Math.abs(self.conHeight - self.scrollHeight)));
             
             self.bar.css('height',self.barHeight + 'px');
+            
+            if (callback){
+                callback.call(self);
+            }
         },
         
         events: function(){
@@ -118,8 +122,9 @@
             * Added event to element
             */
             self.node.on('adjust.' + pluginName, function(){
-                self.adjust.call(self);    
-                self.onResize.call(self);
+                self.adjust.call(self, function(){
+                    self.onResize.call(self);
+                });    
                 
             }).on('destroy.' + pluginName, function(){
                 $.removeData(self.element, 'plugin_' + pluginName);
@@ -132,8 +137,9 @@
             
             
             $(window).on('adjust.' + pluginName, function(){
-                self.adjust.call(self);  
-                self.onResize.call(self);
+                self.adjust.call(self, function(){
+                    self.onResize.call(self);
+                });  
             });
         },
         /* Method for move bar and scrollable on mousewheel event */
