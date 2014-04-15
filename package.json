@@ -1,6 +1,6 @@
 {
   "name": "GScroll",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "description": "JQuery plugin for create a custom scroll",
   "main": "Gruntfile.js",
   "scripts": {
