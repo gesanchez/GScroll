@@ -8,7 +8,6 @@
 
     function Plugin( element, options ) {
         this.element = element;
-
         this.options = $.extend( {}, defaults, options) ;
         this.init();
     }
@@ -18,12 +17,11 @@
         init: function() {
             var self = this;
             self.node = $(self.element);
-            
             self.node.wrap('<div class="GScroll" style="width:'+ self.options.width +';height:'+ self.options.height +'"></div>')
             .wrap('<div class="GScroll-scrollable"></div>')
             .parent().after('<div class="GScroll-bar"></div>');
             
-            self.container = self.node.parent().parent();
+            self.container = self.node.closest('.GScroll');
             self.scrollable = self.node.parent();
             self.bar = self.node.parent().next();
             
@@ -40,6 +38,7 @@
             
             self.conHeight = self.container.height();
             self.scrollHeight = 0;
+            
             if (self.node.is(':not(:visible)')){
                 var clone = self.node.clone();
                 clone.css({
@@ -49,10 +48,12 @@
                 $('body').append(clone);
                 self.scrollHeight = clone.outerHeight();
                 clone.remove();
+                
             }else{
-                self.scrollHeight = self.scrollable.height();
+                
+                self.scrollHeight = self.scrollable.outerHeight();
             }
-            self.barHeight = Math.max(10,(self.conHeight - Math.abs(self.conHeight - self.scrollHeight)));
+            self.barHeight = Math.max(20,(self.conHeight - Math.abs(self.conHeight - self.scrollHeight)));
             
             self.bar.css('height',self.barHeight + 'px');
         },
@@ -64,12 +65,15 @@
             /**
             * Added event to container
             */
+           
             self.container.on({
                 'DOMMouseScroll mousewheel' : function(e){
                     var o = e.originalEvent,
                         delta = (o.detail < 0 || o.wheelDelta > 0) ? 1 : -1;
                 
                     self.wheel.call(self, delta);
+            
+                    return false;
                 },
                 'mouseenter' : function(){
                     if (self.scrollHeight > self.conHeight){
@@ -86,6 +90,9 @@
                 },
                 'mouseup' : function(e){
                     self.dragActive = false;
+                },
+                'focusin' : function(e){
+                    self.onFocusIn.call(self, e);
                 }
             });
             
@@ -115,9 +122,12 @@
                 self.onResize.call(self);
                 
             }).on('destroy.' + pluginName, function(){
-                self.node.unwrap().next().remove().end().unwrap();
-                $.removeData(self.element);
-                self.node.off(pluginName);
+                $.removeData(self.element, 'plugin_' + pluginName);
+                self.node.off('.' + pluginName);
+                self.node.unwrap().unwrap();
+                self.bar.remove();
+                self.element = null;
+                self = null;
             });
             
             
@@ -131,27 +141,28 @@
             var self = this,
                 maxTop = self.conHeight - self.barHeight,
                 maxScrollBottom = self.conHeight - self.scrollHeight,
-                top = maxTop / (Math.abs(maxScrollBottom)) * 10;
+                top = maxTop / (Math.abs(maxScrollBottom)) * 15;
             
             if (delta > 0){
                 
                 self.bar.css({
                     'top' : Math.max(0, parseFloat(self.bar.position().top) - top)
-                },100);
+                });
                 
                 self.scrollable.css({
-                    'top' : Math.min(0, parseFloat(self.scrollable.position().top) + 10)
-                },100);
+                    'top' : Math.min(0, ((maxScrollBottom / maxTop) * (self.bar.position().top + top)))
+                });
                 
             }else if (delta < 0){
-
+                
                 self.bar.css({
                     'top' : Math.min(maxTop, parseFloat(self.bar.position().top) + top)
-                },100);
+                });
+                
                 
                 self.scrollable.css({
-                    'top' : Math.max(maxScrollBottom, parseFloat(self.scrollable.position().top) - 10)
-                },100);
+                    'top' : Math.max(maxScrollBottom, ((maxScrollBottom / maxTop) * (self.bar.position().top + top)))
+                });
             }
         },
         /**
@@ -201,8 +212,23 @@
                         
             self.bar.css({
                 'top': Math.min(maxTop, Math.max(0, bar_top - newTop))
+            });   
+        },
+        onFocusIn : function(e){
+            var self = this,
+                target = $(e.target),
+                target_top = target.offset().top,
+                maxTop = self.conHeight - self.barHeight,
+                maxScrollBottom = Math.abs(self.conHeight - self.scrollHeight),
+                topScrollable = maxScrollBottom - ((target_top + target.outerHeight(true) + 1) / maxTop);
+                            
+            self.bar.css({
+                'top': Math.min(maxTop, Math.max(0, maxTop - (topScrollable / maxTop)))
             });
-            
+                        
+            self.scrollable.css({
+                'top': Math.min(maxScrollBottom, -topScrollable)
+            }); 
         }
     };
 
