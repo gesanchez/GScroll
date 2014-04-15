@@ -3,7 +3,7 @@
     var pluginName = "GScroll",
         defaults = {
             width: "300px",
-            height: "100px"
+            height: "300px"
         };
 
     function Plugin( element, options ) {
@@ -72,7 +72,9 @@
                     self.wheel.call(self, delta);
                 },
                 'mouseenter' : function(){
-                    self.bar.stop(true,true).fadeIn();
+                    if (self.scrollHeight > self.conHeight){
+                        self.bar.stop(true,true).fadeIn();
+                    }
                 },
                 'mouseleave' : function(){
                     self.bar.stop(true,true).fadeOut();
@@ -81,6 +83,9 @@
                 'mousemove' : function(e){
                     e.preventDefault();
                     self.drag.call(self, e);
+                },
+                'mouseup' : function(e){
+                    self.dragActive = false;
                 }
             });
             
@@ -95,7 +100,6 @@
                 },
                 'mouseup' : function(e){
                     self.dragActive = false;
-                    console.log('asd');
                 },
                 'mousemove' : function(e){
                     e.preventDefault();
@@ -106,9 +110,8 @@
             /**
             * Added event to element
             */
-            self.node.on('resize.' + pluginName, function(){
+            self.node.on('adjust.' + pluginName, function(){
                 self.adjust.call(self);    
-                
                 self.onResize.call(self);
                 
             }).on('destroy.' + pluginName, function(){
@@ -118,9 +121,9 @@
             });
             
             
-            $(window).on('resize.' + pluginName, function(){
+            $(window).on('adjust.' + pluginName, function(){
                 self.adjust.call(self);  
-                
+                self.onResize.call(self);
             });
         },
         /* Method for move bar and scrollable on mousewheel event */
@@ -132,21 +135,21 @@
             
             if (delta > 0){
                 
-                self.bar.stop(true,true).animate({
+                self.bar.css({
                     'top' : Math.max(0, parseFloat(self.bar.position().top) - top)
                 },100);
                 
-                self.scrollable.stop(true,true).animate({
+                self.scrollable.css({
                     'top' : Math.min(0, parseFloat(self.scrollable.position().top) + 10)
                 },100);
                 
             }else if (delta < 0){
 
-                self.bar.stop(true,true).animate({
+                self.bar.css({
                     'top' : Math.min(maxTop, parseFloat(self.bar.position().top) + top)
                 },100);
                 
-                self.scrollable.stop(true,true).animate({
+                self.scrollable.css({
                     'top' : Math.max(maxScrollBottom, parseFloat(self.scrollable.position().top) - 10)
                 },100);
             }
@@ -181,11 +184,25 @@
                 bar_top = parseFloat(self.bar.css('top')),
                 maxScrollBottom = Math.abs(self.conHeight - self.scrollHeight),
                 maxTop = self.conHeight - self.barHeight,
-                top = ((scrollable_top * bar_top) / maxScrollBottom) - maxTop;
+                top = (maxScrollBottom / maxTop) * bar_top;
             
+            if (self.scrollHeight < self.conHeight){
+                self.bar.hide();
+            }
+            
+            if (scrollable_top > maxScrollBottom){
+                self.scrollable.css({
+                    'top' : -maxScrollBottom
+                });
+            }
+            
+            var div = top / bar_top,
+                newTop = (top - scrollable_top) / div;
+                        
             self.bar.css({
-                'top': Math.min(maxScrollBottom, Math.max(0, bar_top + top))
+                'top': Math.min(maxTop, Math.max(0, bar_top - newTop))
             });
+            
         }
     };
 
