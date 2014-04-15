@@ -24,7 +24,10 @@ $('#div').trigger('adjust.GScroll');  // When the div changes height, this event
 
 // or
 
-$(window).trigger('adjust.GScroll')
+$(window).trigger('adjust.GScroll');
+
+// For destory instance
+$('#div').trigger('destroy.GScroll');
 ```
 
 ## Plugin
