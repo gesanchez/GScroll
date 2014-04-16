@@ -1,3 +1,13 @@
+/*
+ * GScroll v0.2.2
+ * 
+ * https://github.com/gesanchez/GScroll
+ *
+ * Copyright (c) 2014 German Sanchez
+ * Licensed under the MIT license.
+ *
+ */
+
 ;(function ( $, window, document, undefined ) {
 
     var pluginName = "GScroll",
@@ -147,29 +157,25 @@
             var self = this,
                 maxTop = self.conHeight - self.barHeight,
                 maxScrollBottom = self.conHeight - self.scrollHeight,
-                top = maxTop / (Math.abs(maxScrollBottom)) * 15;
+                top = Math.abs(maxTop / (Math.abs(maxScrollBottom)) * 15);
             
             if (delta > 0){
-                
+                                
                 self.bar.css({
-                    'top' : Math.max(0, parseFloat(self.bar.position().top) - top)
-                });
-                
-                self.scrollable.css({
-                    'top' : Math.min(0, ((maxScrollBottom / maxTop) * (self.bar.position().top + top)))
+                    'top' : Math.max(0, parseFloat(self.bar.css('top')) - top)
                 });
                 
             }else if (delta < 0){
                 
                 self.bar.css({
-                    'top' : Math.min(maxTop, parseFloat(self.bar.position().top) + top)
+                    'top' : Math.min(maxTop, parseFloat(self.bar.css('top')) + top)
                 });
                 
-                
-                self.scrollable.css({
-                    'top' : Math.max(maxScrollBottom, ((maxScrollBottom / maxTop) * (self.bar.position().top + top)))
-                });
             }
+            
+            self.scrollable.css({
+                'top' : Math.min(0 ,Math.max(maxScrollBottom, (maxScrollBottom / maxTop) * parseFloat(self.bar.css('top'))))
+            });
         },
         /**
         * Method for move bar and scrollable when bar is dragged
