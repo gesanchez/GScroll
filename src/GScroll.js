@@ -13,7 +13,7 @@
     var pluginName = "GScroll",
         defaults = {
             width: "300px",
-            height: "300px"
+            height: "200px"
         };
 
     function Plugin( element, options ) {
@@ -227,20 +227,30 @@
             });   
         },
         onFocusIn : function(e){
+
             var self = this,
                 target = $(e.target),
-                target_top = target.offset().top,
+                target_top = target.get(0).getBoundingClientRect().top + (target.outerHeight() - self.barHeight) - $(window).scrollTop() + Math.abs(parseFloat(self.scrollable.css('top'))),
                 maxTop = self.conHeight - self.barHeight,
-                maxScrollBottom = Math.abs(self.conHeight - self.scrollHeight),
-                topScrollable = maxScrollBottom - ((target_top + target.outerHeight(true) + 1) / maxTop);
-                            
-            self.bar.css({
-                'top': Math.min(maxTop, Math.max(0, maxTop - (topScrollable / maxTop)))
-            });
-                        
-            self.scrollable.css({
-                'top': Math.min(maxScrollBottom, -topScrollable)
-            }); 
+                maxScrollBottom = self.conHeight - self.scrollHeight,
+                top = (maxTop * target_top) / self.scrollHeight;
+            
+            if (top < Math.abs(parseFloat(self.scrollable.css('top'))) + self.conHeight){
+                
+                if (target_top < 0){
+                    self.bar.css({
+                        'top': Math.min(maxTop, Math.max(0, top))
+                    }, 200);
+                }else{
+                    self.bar.css({
+                        'top': Math.min(maxTop, Math.max(0, top))
+                    }, 200);
+                }
+                    
+                self.scrollable.css({
+                    'top' : Math.min(0 ,Math.max(maxScrollBottom, (maxScrollBottom / maxTop) * parseFloat(self.bar.css('top'))))
+                },200);
+            }
         }
     };
 
