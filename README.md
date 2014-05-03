@@ -30,6 +30,22 @@ $(window).trigger('adjust.GScroll');
 $('#div').trigger('destroy.GScroll');
 ```
 
+## Features
+-------
++ Vertical scroll.
++ Lightweight 4kb uglified.
++ Focusin event, when a element received the focus, the content it scrolled  to the element.
++ Drag event, without JQuery UI dependence.
++ Wheel event, without another plugin.
++ Trigger for update the content height when changed the inside content and trigger for destroy instance.
+
+
+## Upcoming version
+-------
++ Horizontal scroll.
++ Scrollto, for scroll to a specific element.
++ Something new events.
+
 ## Plugin
 ------
 This plugin was written with template of [Jquery Boilerplate](http://jqueryboilerplate.com/)
